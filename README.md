@@ -1,28 +1,8 @@
-# IMPORTANT
+WebRTC is [now available in all major browsers](https://caniuse.com/#search=webrtc), including Android and iOS. However, when it comes to WebViews outside the browser, things are not so rosy. As of iOS 12.2, Apple still doesn't have getUserMedia() supported in Standalone Web Apps and similar contexts outside Safari. The iOS 13 beta briefly supported it, and [Google's team even congratulated Apple](https://twitter.com/QbixApps/status/1156664231825047552) but they pulled it.
 
-[LOOKING FOR NEW MAINTAINERS](https://github.com/BasqueVoIPMafia/cordova-plugin-iosrtc/issues/353)
+This cordova plugin is designed to be a drop-in replacement allowing you to use getUserMedia() in your websites AND cordova apps. It combines several techniques, capturing [native camera feeds](https://webrtc.org/native-code/ios/) and sending them over a local WebRTC connection ([SDP with no signaling server](https://en.wikipedia.org/wiki/Session_Description_Protocol)) to the local WebView, which then receives it as an actual [MediaStream](https://developer.mozilla.org/en-US/docs/Web/API/MediaStream) object you can use. From there, the actual [WebRTC API](https://developer.mozilla.org/en-US/docs/Web/API/WebRTC_API) is supported, including sending MediaStreams. You can also send it via WebSocket to be [streamed live to Facebook or YouTube using RMTP](https://github.com/Qbix/Canvas-Streaming-Example).
 
-This project is no longer maintained. If you are interested in become a maintainer, please comment in the above link.
-
-
-# cordova-plugin-iosrtc
-
-[Cordova](http://cordova.apache.org/) iOS plugin exposing the  ̶f̶u̶l̶l̶ [WebRTC W3C JavaScript APIs](http://www.w3.org/TR/webrtc/).
-
-* [Public Google Group (mailing list)](https://groups.google.com/forum/#!forum/cordova-plugin-iosrtc) for questions and discussions about *cordova-plugin-iosrtc*.
-* [Bug Tracker](https://github.com/BasqueVoIPMafia/cordova-plugin-iosrtc/issues) for reporting issues and requesting new features (**please** don't use the bug tracker for questions or problems, use the mailing list instead).
-* [NPM package](https://www.npmjs.com/package/cordova-plugin-iosrtc).
-
-
-**Yet another WebRTC SDK for iOS?**
-
-Absolutely **not**. This plugin exposes the WebRTC W3C API for Cordova iOS apps (you know there is no WebRTC in iOS, right?), which means no need to learn "yet another WebRTC API" and no need to use a specific service/product/provider.
-
-
-**Who?**
-
-This plugin was initially developed at eFace2Face, and later maintained by the community, specially by [Saúl Ibarra Corretgé](http://bettercallsaghul.com) (_The OpenSource Warrior Who Does Not Burn_).
-
+This plugin is part of Qbix's Cordova project, to help Web developers build apps that work everywhere. We maintain these plugins for our [Qbix Platform](https://github.com/Qbix/Platform), an open source operating system for building apps that out of the box can support integration with contacts, notifications, payments, videoconferencing, and much more. Focus on building your app, not wrestling with platforms.
 
 ## Requirements
 
@@ -38,120 +18,50 @@ In order to make this Cordova plugin run into a iOS application some requirement
 Within your Cordova project:
 
 ```bash
-$ cordova plugin add cordova-plugin-iosrtc
+$ cordova plugin add https://github.com/Qbix/cordova-plugin-iosrtc.git
 ```
 
 (or add it into a `<plugin>` entry in the `config.xml` of your app).
-
 
 ## Building
 
 * [Building](docs/Building.md): Guidelines for building a Cordova iOS application including the *cordova-plugin-iosrtc* plugin.
 * [Building `libwebrtc`](docs/BuildingLibWebRTC.md): Guidelines for building Google's *libwebrtc* with modifications needed by the *cordova-plugin-iosrtc* plugin (just in case you want to use a different version of *libwebrtc* or apply your own changes to it).
 
-
 ## Usage
 
 The plugin exposes the `cordova.plugins.iosrtc` JavaScript namespace which contains all the WebRTC classes and functions.
 
 ```javascript
+// Just for Cordova apps.
 var pc = new cordova.plugins.iosrtc.RTCPeerConnection({
   iceServers: []
 });
 
-cordova.plugins.iosrtc.getUserMedia(
-  // constraints
-  { audio: true, video: true },
-  // success callback
-  function (stream) {
-    console.log('got local MediaStream: ', stream);
+MediaDevices.getUserMedia = cordova.plugins.iosrtc.getUserMedia;
 
-    pc.addStream(stream);
-  },
-  // failure callback
-  function (error) {
-    console.error('getUserMedia failed: ', error);
-  }
-);
 ```
 
-In case you'd like to expose the API in the global namespace like regular browsers you can do the following:
-
-```javascript
-// Just for Cordova apps.
-document.addEventListener('deviceready', function () {
-  // Just for iOS devices.
-  if (window.device.platform === 'iOS') {
-    cordova.plugins.iosrtc.registerGlobals();
-
-    // load adapter.js
-    var script = document.createElement("script");
-    script.type = "text/javascript";
-    script.src = "js/adapter-latest.js";
-    script.async = false;
-    document.getElementsByTagName("head")[0].appendChild(script);
-  }
-});
-```
-
-And that's all. Now you have `window.RTCPeerConnection`, `navigator.getUserMedia`, etc.
-
-
-## FAQ
-
-See [the FAQ](FAQ.md).
-
-
-## Documentation
-
-Read the full [documentation](docs/index.md) in the *docs* folder.
-
+And that's all. It's supposed to be a drop-in replacement.
 
 ## Who Uses It
 
 [People and companies](WHO_USES_IT.md) using *cordova-plugin-iosrtc*.
 
-If you are using the plugin we would love to [hear back from you](WHO_USES_IT.md)!
-
-
-## Known Issues
-
-
-#### iOS Safari and crash on WebSocket events
-
-Don't call plugin methods within WebSocket events (`onopen`, `onmessage`, etc). There is an issue in iOS Safari (see [issue #12](https://github.com/BasqueVoIPMafia/cordova-plugin-iosrtc/issues/12)). Instead run a `setTimeout()` within the WebSocket event if you need to call plugin methods on it.
-
-Or better yet, include the provided [ios-websocket-hack.js](extra/ios-websocket-hack.js) in your app and load into your `index.html` as follows:
-
-```
-<script src="cordova.js"></script>
-<script src="ios-websocket-hack.min.js"></script>
-```
-
-#### HTML5 video API
-
-There is no real media source attached to the `<video>` element so some [HTML5 video events](https://developer.mozilla.org/en-US/docs/Web/Guide/Events/Media_events) and properties are artificially emitted/set by the plugin on behalf of the video element.
-
-Methods such as `play()`, `pause()` are not implemented. In order to pause a video just set `enabled = false` on the associated `MediaStreamTrack`.
-
+If you are using the plugin we would love to [hear back from you](https://qbix.com/about)!
 
 ## Changelog
 
 See [CHANGELOG.md](./CHANGELOG.md).
 
+**Credit**
 
-## Author
-
-[Iñaki Baz Castillo](https://inakibaz.me/)
-
-
-### Maintainers
-
+This plugin was initially developed at eFace2Face, and later maintained by the community, including:
+* [Saúl Ibarra Corretgé](http://bettercallsaghul.com) (_The OpenSource Warrior Who Does Not Burn_).
 * [Iñaki Baz Castillo](https://inakibaz.me/) (no longer active maintainer)
 * [Saúl Ibarra Corretgé](http://bettercallsaghul.com) (no longer active maintainer)
 
-Looking for new maintainers. Interested? Comment [here](https://github.com/BasqueVoIPMafia/cordova-plugin-iosrtc/issues/353).
-
+It has now been forked is being maintained by Qbix, Inc.
 
 ## License
 
