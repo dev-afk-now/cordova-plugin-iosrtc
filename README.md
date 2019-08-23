@@ -2,6 +2,8 @@ WebRTC is [now available in all major browsers](https://caniuse.com/#search=webr
 
 This cordova plugin is designed to be a drop-in replacement allowing you to use getUserMedia() in your websites AND cordova apps. It combines several techniques, capturing [native camera feeds](https://webrtc.org/native-code/ios/) and sending them over a local WebRTC connection ([SDP with no signaling server](https://en.wikipedia.org/wiki/Session_Description_Protocol)) to the local WebView, which then receives it as an actual [MediaStream](https://developer.mozilla.org/en-US/docs/Web/API/MediaStream) object you can use. From there, the actual [WebRTC API](https://developer.mozilla.org/en-US/docs/Web/API/WebRTC_API) is supported, including sending MediaStreams. You can also send it via WebSocket to be [streamed live to Facebook or YouTube using RMTP](https://github.com/Qbix/Canvas-Streaming-Example).
 
+[Here is a demo video](https://twitter.com/i/status/1156664231825047552) of the plugin working, delivering a MediaStream with a ~100ms delay in a Cordova app on an iPad.
+
 This plugin is part of Qbix's Cordova project, to help Web developers build apps that work everywhere. We maintain these plugins for our [Qbix Platform](https://github.com/Qbix/Platform), an open source operating system for building apps that out of the box can support integration with contacts, notifications, payments, videoconferencing, and much more. Focus on building your app, not wrestling with platforms.
 
 ## Requirements
